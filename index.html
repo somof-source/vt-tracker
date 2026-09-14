@@ -7,13 +7,13 @@
 <style>
   :root{color-scheme:light;
     --bg:#f5f5f4;--surface:#fcfcfb;--line:#e4e3df;--text:#0b0b0b;--text2:#52514e;--muted:#8a8985;
-    --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--accent:#2a78d6}
+    --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#008300;--accent:#2a78d6}
   @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
     --bg:#111110;--surface:#1a1a19;--line:#2e2e2c;--text:#fff;--text2:#c3c2b7;--muted:#8a8985;
-    --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--accent:#3987e5}}
+    --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--accent:#3987e5}}
   :root[data-theme="dark"]{color-scheme:dark;
     --bg:#111110;--surface:#1a1a19;--line:#2e2e2c;--text:#fff;--text2:#c3c2b7;--muted:#8a8985;
-    --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--accent:#3987e5}
+    --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--accent:#3987e5}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 -apple-system,"Apple SD Gothic Neo",system-ui,sans-serif;padding-block:0 40px;padding-inline:16px}
   .wrap{max-width:1040px;margin:0 auto}
@@ -50,6 +50,7 @@
   .link .pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start;margin:8px 0}
   .link .poster{width:100%;aspect-ratio:848/1200;object-fit:cover;border-radius:6px;border:1px solid var(--line);background:var(--bg)}
   .link .qrimg{width:100%;background:#fff;border-radius:6px;border:1px solid var(--line)}
+  .link .noimg{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;border-style:dashed}
   .link .cap{font-size:11px;color:var(--muted);text-align:center;margin-top:4px}
   .link .short{font-size:14px;font-weight:600;word-break:break-all}
   .link .short a{color:var(--accent);text-decoration:none}
@@ -119,7 +120,7 @@
 (function(){
   var C = window.TRACKER_CONFIG || {};
   var POSTERS = C.POSTERS || [];
-  var COLORS = ['var(--s1)','var(--s2)','var(--s3)','var(--s4)'];
+  var COLORS = ['var(--s1)','var(--s2)','var(--s3)','var(--s4)','var(--s5)','var(--s6)'];
   var colorOf = {}; POSTERS.forEach(function(p,i){ colorOf[p.code] = COLORS[i % COLORS.length]; });
   var labelOf = {}; POSTERS.forEach(function(p){ labelOf[p.code] = p.label; });
   var rows = [], rangeDays = 30;
@@ -234,7 +235,7 @@
     $('#links').innerHTML = POSTERS.map(function(p){
       var short = p.short || '';
       return '<div class="card link"><b><i class="sw" style="background:'+colorOf[p.code]+'"></i>'+p.label+'</b>'
-        + '<div class="pair"><div>' + (p.image ? '<img class="poster" src="'+p.image+'" alt="'+p.label+'">' : '') + '<div class="cap">포스터</div></div>'
+        + '<div class="pair"><div>' + (p.image ? '<img class="poster" src="'+p.image+'" alt="'+p.label+'">' : '<div class="poster noimg">이미지 없음</div>') + '<div class="cap">포스터</div></div>'
         + '<div>' + (p.qr ? '<img class="qrimg" src="'+p.qr+'" alt="'+p.label+' QR">' : '') + '<div class="cap">QR (utm_content='+p.code+')</div></div></div>'
         + '<div class="short"><a href="'+short+'" target="_blank" rel="noopener">'+short.replace(/^https?:\/\//,'')+'</a></div>'
         + '<button class="btn" style="margin-top:8px" data-copy="'+short+'">링크 복사</button></div>';

@@ -16,6 +16,8 @@ window.TRACKER_CONFIG = {
     { code: 'official', label: '정식 포스터',  source: 'poster',    medium: 'offline', image: 'posters/official.png', qr: 'qr/official.png', short: 'https://tinyurl.com/vt26-official' },
     { code: 'meme1',    label: '밈 포스터 1',  source: 'poster',    medium: 'offline', image: 'posters/meme1.png',    qr: 'qr/meme1.png',    short: 'https://tinyurl.com/vt26-meme1' },
     { code: 'meme2',    label: '밈 포스터 2',  source: 'poster',    medium: 'offline', image: 'posters/meme2.png',    qr: 'qr/meme2.png',    short: 'https://tinyurl.com/vt26-meme2' },
+    { code: 'etc1',     label: '기타 포스터 1', source: 'poster',    medium: 'offline', image: '',                     qr: 'qr/etc1.png',     short: 'https://tinyurl.com/vt26-etc1' },
+    { code: 'etc2',     label: '기타 포스터 2', source: 'poster',    medium: 'offline', image: '',                     qr: 'qr/etc2.png',     short: 'https://tinyurl.com/vt26-etc2' },
     { code: 'ig',       label: '인스타그램',   source: 'instagram', medium: 'social',  image: 'posters/ig.png',       qr: 'qr/ig.png',       short: 'https://tinyurl.com/vt26-ig' }
   ],
   CAMPAIGN: 'vt_form_2026'
