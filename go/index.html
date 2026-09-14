@@ -48,15 +48,18 @@
   if (C.ENDPOINT) {
     var qs = Object.keys(params).map(function (k) { return k + '=' + encodeURIComponent(params[k]); }).join('&');
     var url = C.ENDPOINT + (C.ENDPOINT.indexOf('?') > -1 ? '&' : '?') + qs;
+    var sent = false;
+    // 1) sendBeacon: 페이지를 떠나도 브라우저가 전송을 보장 (POST, JSON 본문)
     try {
-      // 1순위: keepalive fetch (페이지가 떠나도 요청 유지)
-      fetch(url, { mode: 'no-cors', keepalive: true, credentials: 'omit' }).then(go, go);
-    } catch (e) {
-      var img = new Image();
-      img.onload = img.onerror = go;
-      img.src = url;
-    }
-    setTimeout(go, 700); // 최대 0.7초만 기다림
+      if (navigator.sendBeacon) sent = navigator.sendBeacon(C.ENDPOINT, new Blob([JSON.stringify(params)], { type: 'text/plain' }));
+    } catch (e) {}
+    // 2) 이미지 비콘 (GET) - 구형 인앱 브라우저용 보조
+    var img = new Image();
+    img.onload = img.onerror = go;
+    img.src = url + '&_=' + Date.now();
+    // 3) keepalive fetch
+    try { fetch(url, { mode: 'no-cors', keepalive: true, credentials: 'omit' }).then(go, go); } catch (e) {}
+    setTimeout(go, sent ? 900 : 1800); // 비콘이 접수됐으면 0.9초, 아니면 최대 1.8초 대기
   } else {
     go();
   }
