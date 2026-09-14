@@ -1,7 +1,7 @@
 // ===== 여기만 수정하면 됩니다 =====
 window.TRACKER_CONFIG = {
   // Apps Script 웹 앱 URL (…/exec). 비어 있으면 대시보드는 비어 있는 상태로 표시됩니다.
-  ENDPOINT: '',
+  ENDPOINT: 'https://script.google.com/macros/s/AKfycbxVJyujR1koFh5kvEYKYVfYAY85agrYJILNu4-imEqC47BqOFwq-gXgnCBRNPoV5rmj/exec',
 
   // 최종 목적지 (구글폼)
   FORM_URL: 'https://forms.gle/KV4Uh4EEtXZEifnu5',
