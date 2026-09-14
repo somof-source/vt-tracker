@@ -48,18 +48,19 @@
   if (C.ENDPOINT) {
     var qs = Object.keys(params).map(function (k) { return k + '=' + encodeURIComponent(params[k]); }).join('&');
     var url = C.ENDPOINT + (C.ENDPOINT.indexOf('?') > -1 ? '&' : '?') + qs;
+    // 한 번만 기록되도록: sendBeacon 성공 시 그것만, 아니면 이미지 비콘 하나만 보냄
     var sent = false;
-    // 1) sendBeacon: 페이지를 떠나도 브라우저가 전송을 보장 (POST, JSON 본문)
     try {
       if (navigator.sendBeacon) sent = navigator.sendBeacon(C.ENDPOINT, new Blob([JSON.stringify(params)], { type: 'text/plain' }));
     } catch (e) {}
-    // 2) 이미지 비콘 (GET) - 구형 인앱 브라우저용 보조
-    var img = new Image();
-    img.onload = img.onerror = go;
-    img.src = url + '&_=' + Date.now();
-    // 3) keepalive fetch
-    try { fetch(url, { mode: 'no-cors', keepalive: true, credentials: 'omit' }).then(go, go); } catch (e) {}
-    setTimeout(go, sent ? 900 : 1800); // 비콘이 접수됐으면 0.9초, 아니면 최대 1.8초 대기
+    if (sent) {
+      setTimeout(go, 400); // 브라우저가 전송을 보장하므로 짧게만 대기
+    } else {
+      var img = new Image();
+      img.onload = img.onerror = go;
+      img.src = url + '&_=' + Date.now();
+      setTimeout(go, 1800);
+    }
   } else {
     go();
   }
