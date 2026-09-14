@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>이동 중…</title>
+<style>
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;font:16px/1.5 -apple-system,system-ui,sans-serif;color:#555;background:#fafafa}
+  a{color:#2a78d6}
+</style>
+<script src="../config.js"></script>
+</head>
+<body>
+<p id="msg">설문으로 이동 중입니다…</p>
+<script>
+(function () {
+  var C = window.TRACKER_CONFIG || {};
+  var q = new URLSearchParams(location.search);
+  var code = q.get('p') || q.get('utm_content') || '';
+  var poster = (C.POSTERS || []).filter(function (x) { return x.code === code; })[0] || {};
+  var ua = navigator.userAgent || '';
+  var ref = document.referrer || '';
+  var igApp = /Instagram/i.test(ua) || /instagram\.com/i.test(ref) || /\bl\.instagram\.com/i.test(ref);
+  if (!code && igApp) { code = 'ig'; poster = (C.POSTERS || []).filter(function (x) { return x.code === 'ig'; })[0] || {}; }
+
+  var params = {
+    action: 'hit',
+    p: code || 'unknown',
+    src: q.get('utm_source') || poster.source || (igApp ? 'instagram' : 'direct'),
+    med: q.get('utm_medium') || poster.medium || '',
+    cmp: q.get('utm_campaign') || C.CAMPAIGN || '',
+    cnt: q.get('utm_content') || code,
+    ig: igApp ? '1' : '0',
+    ref: ref,
+    ua: ua,
+    lang: navigator.language || ''
+  };
+
+  var dest = C.FORM_URL || 'https://forms.gle/KV4Uh4EEtXZEifnu5';
+  if (C.PREFILL_ENTRY && code) {
+    dest += (dest.indexOf('?') > -1 ? '&' : '?') + encodeURIComponent(C.PREFILL_ENTRY) + '=' + encodeURIComponent(code);
+  }
+
+  var done = false;
+  function go() { if (done) return; done = true; location.replace(dest); }
+
+  if (C.ENDPOINT) {
+    var qs = Object.keys(params).map(function (k) { return k + '=' + encodeURIComponent(params[k]); }).join('&');
+    var url = C.ENDPOINT + (C.ENDPOINT.indexOf('?') > -1 ? '&' : '?') + qs;
+    try {
+      // 1순위: keepalive fetch (페이지가 떠나도 요청 유지)
+      fetch(url, { mode: 'no-cors', keepalive: true, credentials: 'omit' }).then(go, go);
+    } catch (e) {
+      var img = new Image();
+      img.onload = img.onerror = go;
+      img.src = url;
+    }
+    setTimeout(go, 700); // 최대 0.7초만 기다림
+  } else {
+    go();
+  }
+  document.getElementById('msg').innerHTML = '설문으로 이동 중입니다… 자동으로 넘어가지 않으면 <a href="' + dest + '">여기</a>를 눌러주세요.';
+})();
+</script>
+</body>
+</html>

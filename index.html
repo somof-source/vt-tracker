@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>포스터 유입 대시보드</title>
+<style>
+  :root{color-scheme:light;
+    --bg:#f5f5f4;--surface:#fcfcfb;--line:#e4e3df;--text:#0b0b0b;--text2:#52514e;--muted:#8a8985;
+    --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--accent:#2a78d6}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
+    --bg:#111110;--surface:#1a1a19;--line:#2e2e2c;--text:#fff;--text2:#c3c2b7;--muted:#8a8985;
+    --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--accent:#3987e5}}
+  :root[data-theme="dark"]{color-scheme:dark;
+    --bg:#111110;--surface:#1a1a19;--line:#2e2e2c;--text:#fff;--text2:#c3c2b7;--muted:#8a8985;
+    --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--accent:#3987e5}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 -apple-system,"Apple SD Gothic Neo",system-ui,sans-serif;padding-block:0 40px;padding-inline:16px}
+  .wrap{max-width:1040px;margin:0 auto}
+  header{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:20px 0 12px}
+  h1{font-size:20px;margin:0;flex:1 1 auto}
+  .tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:3px}
+  .tabs button{border:0;background:transparent;color:var(--text2);padding:6px 12px;border-radius:6px;cursor:pointer;font:inherit}
+  .tabs button.on{background:var(--accent);color:#fff}
+  .filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 16px;color:var(--text2)}
+  .filters button,.btn{border:1px solid var(--line);background:var(--surface);color:var(--text);padding:5px 10px;border-radius:6px;cursor:pointer;font:inherit}
+  .filters button.on{border-color:var(--accent);color:var(--accent)}
+  .status{margin-left:auto;font-size:12px;color:var(--muted)}
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .tile .k{font-size:12px;color:var(--text2)}.tile .v{font-size:28px;font-weight:600;letter-spacing:-.02em;margin-top:2px}
+  .tile .sub{font-size:12px;color:var(--muted)}
+  .row2{display:grid;gap:12px;grid-template-columns:1fr 1fr;margin-top:12px}
+  @media(max-width:720px){.row2{grid-template-columns:1fr}}
+  h2{font-size:14px;margin:0 0 10px;color:var(--text2);font-weight:600}
+  .bars{display:grid;gap:8px}
+  .bar{display:grid;grid-template-columns:100px 1fr 44px;align-items:center;gap:8px;font-size:13px}
+  .bar .track{height:14px;background:var(--line);border-radius:4px;overflow:hidden}
+  .bar .fill{height:100%;border-radius:0 4px 4px 0;transition:width .3s}
+  .bar .n{text-align:right;font-variant-numeric:tabular-nums;color:var(--text2)}
+  .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+  svg{width:100%;height:auto;display:block}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--text2);margin-top:8px}
+  .tip{position:fixed;pointer-events:none;background:var(--text);color:var(--bg);font-size:12px;padding:6px 8px;border-radius:6px;display:none;z-index:9;white-space:nowrap}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{color:var(--text2);font-weight:600}
+  .tbl{overflow-x:auto}
+  .links{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  .link .pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start;margin:8px 0}
+  .link .poster{width:100%;aspect-ratio:848/1200;object-fit:cover;border-radius:6px;border:1px solid var(--line);background:var(--bg)}
+  .link .qrimg{width:100%;background:#fff;border-radius:6px;border:1px solid var(--line)}
+  .link .cap{font-size:11px;color:var(--muted);text-align:center;margin-top:4px}
+  .link .short{font-size:14px;font-weight:600;word-break:break-all}
+  .link .short a{color:var(--accent);text-decoration:none}
+  .link code{display:block;font-size:11px;word-break:break-all;color:var(--text2);background:var(--bg);padding:6px;border-radius:4px}
+  .note{color:var(--muted);font-size:12px;margin-top:8px}
+  .warn{background:#fff4e0;color:#6b4a00;border:1px solid #f0d9a5;border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:12px}
+  :root[data-theme="dark"] .warn{background:#3a2c0d;color:#f2d38b;border-color:#5c4612}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .warn{background:#3a2c0d;color:#f2d38b;border-color:#5c4612}}
+</style>
+<script src="config.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>포스터 유입 대시보드</h1>
+    <div class="tabs">
+      <button class="on" data-tab="dash">대시보드</button>
+      <button data-tab="links">링크 · QR</button>
+    </div>
+  </header>
+
+  <section id="tab-dash">
+    <div id="demoWarn" class="warn" hidden>config.js 의 ENDPOINT 가 비어 있습니다. Apps Script 웹 앱 URL을 넣으면 실제 데이터가 표시됩니다.</div>
+    <div class="filters">
+      <span>기간</span>
+      <button data-range="7">7일</button>
+      <button data-range="30" class="on">30일</button>
+      <button data-range="0">전체</button>
+      <button id="refresh" class="btn">새로고침</button>
+      <span class="status" id="status">불러오는 중…</span>
+    </div>
+
+    <div class="grid" id="tiles"></div>
+
+    <div class="row2">
+      <div class="card">
+        <h2>포스터별 유입 (클릭 수)</h2>
+        <div class="bars" id="bars"></div>
+      </div>
+      <div class="card">
+        <h2>인스타그램 앱 내 브라우저 비율</h2>
+        <div class="bars" id="igBars"></div>
+        <p class="note">링크에 p=ig 가 없어도 인스타 앱에서 열면 "인스타 앱"으로 잡힙니다. 포스터 QR을 인스타 앱으로 찍은 경우도 포함됩니다.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <h2>일별 추이</h2>
+      <div id="line"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <h2>최근 유입 50건</h2>
+      <div class="tbl"><table id="raw"><thead><tr><th>시각</th><th>포스터</th><th>source</th><th>medium</th><th>인스타앱</th><th>referrer</th></tr></thead><tbody></tbody></table></div>
+    </div>
+  </section>
+
+  <section id="tab-links" hidden>
+    <p class="note">포스터와 거기에 인쇄된 QR·단축 링크의 짝입니다. 인스타그램 링크는 프로필 바이오에 씁니다.</p>
+    <div class="links" id="links"></div>
+  </section>
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+(function(){
+  var C = window.TRACKER_CONFIG || {};
+  var POSTERS = C.POSTERS || [];
+  var COLORS = ['var(--s1)','var(--s2)','var(--s3)','var(--s4)'];
+  var colorOf = {}; POSTERS.forEach(function(p,i){ colorOf[p.code] = COLORS[i % COLORS.length]; });
+  var labelOf = {}; POSTERS.forEach(function(p){ labelOf[p.code] = p.label; });
+  var rows = [], rangeDays = 30;
+  var $ = function(s){ return document.querySelector(s); };
+
+  // ---- tabs
+  document.querySelectorAll('.tabs button').forEach(function(b){
+    b.onclick = function(){
+      document.querySelectorAll('.tabs button').forEach(function(x){ x.classList.toggle('on', x===b); });
+      $('#tab-dash').hidden = b.dataset.tab !== 'dash';
+      $('#tab-links').hidden = b.dataset.tab !== 'links';
+    };
+  });
+  document.querySelectorAll('[data-range]').forEach(function(b){
+    b.onclick = function(){
+      document.querySelectorAll('[data-range]').forEach(function(x){ x.classList.toggle('on', x===b); });
+      rangeDays = +b.dataset.range; render();
+    };
+  });
+  $('#refresh').onclick = load;
+
+  // ---- data
+  function load(){
+    $('#status').textContent = '불러오는 중…';
+    if (!C.ENDPOINT) { $('#demoWarn').hidden = false; rows = []; render(); $('#status').textContent = 'ENDPOINT 미설정'; return; }
+    var cb = 'cb_' + Date.now();
+    window[cb] = function(data){
+      rows = (data.rows || []).slice().sort(function(a,b){ return a.ts-b.ts; });
+      render(); $('#status').textContent = '총 ' + (data.total||rows.length) + '건 · ' + new Date().toLocaleTimeString('ko-KR') + ' 갱신';
+      delete window[cb]; s.remove();
+    };
+    var s = document.createElement('script');
+    s.src = C.ENDPOINT + (C.ENDPOINT.indexOf('?')>-1?'&':'?') + 'action=stats&callback=' + cb + '&_=' + Date.now();
+    s.onerror = function(){ $('#status').textContent = '불러오기 실패 (ENDPOINT / 배포 권한 확인)'; };
+    document.head.appendChild(s);
+  }
+
+  // ---- render
+  function render(){
+    var since = rangeDays ? Date.now() - rangeDays*864e5 : 0;
+    var R = rows.filter(function(r){ return r.ts >= since; });
+    var byP = {}; POSTERS.forEach(function(p){ byP[p.code]=0; });
+    var other = 0, ig = 0, today = 0, dayStart = new Date(); dayStart.setHours(0,0,0,0);
+    R.forEach(function(r){
+      if (r.poster in byP) byP[r.poster]++; else other++;
+      if (r.ig) ig++; if (r.ts >= dayStart.getTime()) today++;
+    });
+    var top = POSTERS.slice().sort(function(a,b){ return byP[b.code]-byP[a.code]; })[0];
+    var total = R.length;
+
+    $('#tiles').innerHTML = [
+      tile('전체 유입', total, rangeDays ? '최근 '+rangeDays+'일' : '전체 기간'),
+      tile('오늘', today, new Date().toLocaleDateString('ko-KR')),
+      tile('1위 포스터', top && byP[top.code] ? top.label : '-', top && total ? Math.round(byP[top.code]/total*100)+'%' : ''),
+      tile('인스타 앱 유입', ig, total ? Math.round(ig/total*100)+'%' : '')
+    ].join('');
+
+    var max = Math.max(1, other, Math.max.apply(null, POSTERS.map(function(p){return byP[p.code];})));
+    $('#bars').innerHTML = POSTERS.map(function(p){ return bar(p.label, byP[p.code], max, colorOf[p.code]); }).join('') + (other ? bar('기타/미상', other, max, 'var(--muted)') : '');
+
+    var igByP = {}; POSTERS.forEach(function(p){ igByP[p.code]=0; });
+    R.forEach(function(r){ if (r.ig && r.poster in igByP) igByP[r.poster]++; });
+    $('#igBars').innerHTML = POSTERS.map(function(p){
+      var n = byP[p.code], pct = n ? Math.round(igByP[p.code]/n*100) : 0;
+      return bar(p.label, pct + '%', 100, colorOf[p.code], pct);
+    }).join('');
+
+    lineChart(R, since);
+    $('#legend').innerHTML = POSTERS.map(function(p){ return '<span><i class="sw" style="background:'+colorOf[p.code]+'"></i>'+p.label+'</span>'; }).join('');
+
+    $('#raw tbody').innerHTML = R.slice(-50).reverse().map(function(r){
+      return '<tr><td>'+new Date(r.ts).toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})+'</td><td><i class="sw" style="background:'+(colorOf[r.poster]||'var(--muted)')+'"></i>'+(labelOf[r.poster]||r.poster||'-')+'</td><td>'+esc(r.source)+'</td><td>'+esc(r.medium)+'</td><td>'+(r.ig?'예':'')+'</td><td>'+esc((r.ref||'').replace(/^https?:\/\//,'').slice(0,40))+'</td></tr>';
+    }).join('') || '<tr><td colspan="6" style="color:var(--muted)">데이터 없음</td></tr>';
+  }
+  function tile(k,v,sub){ return '<div class="card tile"><div class="k">'+k+'</div><div class="v">'+v+'</div><div class="sub">'+(sub||'&nbsp;')+'</div></div>'; }
+  function bar(label,val,max,color,w){ var width = (w!=null?w:val)/max*100; return '<div class="bar"><span><i class="sw" style="background:'+color+'"></i>'+label+'</span><div class="track"><div class="fill" style="width:'+width+'%;background:'+color+'"></div></div><span class="n">'+val+'</span></div>'; }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+  function lineChart(R, since){
+    var days = rangeDays || Math.max(7, Math.ceil((Date.now() - (rows[0]?rows[0].ts:Date.now()))/864e5)+1);
+    var start = new Date(); start.setHours(0,0,0,0); start = start.getTime() - (days-1)*864e5;
+    var series = {}; POSTERS.forEach(function(p){ series[p.code] = new Array(days).fill(0); });
+    R.forEach(function(r){ var i = Math.floor((r.ts-start)/864e5); if (i>=0 && i<days && series[r.poster]) series[r.poster][i]++; });
+    var W=900,H=220,L=32,Rr=12,T=10,B=28, iw=W-L-Rr, ih=H-T-B;
+    var max = 1; POSTERS.forEach(function(p){ series[p.code].forEach(function(v){ if(v>max) max=v; }); });
+    var x = function(i){ return L + (days===1?iw/2:i/(days-1)*iw); }, y = function(v){ return T + ih - v/max*ih; };
+    var s = '<svg viewBox="0 0 '+W+' '+H+'" id="lsvg">';
+    [0,0.5,1].forEach(function(f){ var v=Math.round(max*f); s+='<line x1="'+L+'" x2="'+(W-Rr)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="var(--line)"/><text x="'+(L-6)+'" y="'+(y(v)+4)+'" text-anchor="end" font-size="11" fill="var(--muted)">'+v+'</text>'; });
+    var step = Math.ceil(days/8);
+    for (var i=0;i<days;i+=step){ var d=new Date(start+i*864e5); s+='<text x="'+x(i)+'" y="'+(H-8)+'" text-anchor="middle" font-size="11" fill="var(--muted)">'+(d.getMonth()+1)+'/'+d.getDate()+'</text>'; }
+    POSTERS.forEach(function(p){
+      var pts = series[p.code].map(function(v,i){ return x(i)+','+y(v); }).join(' ');
+      s += '<polyline points="'+pts+'" fill="none" stroke="'+colorOf[p.code]+'" stroke-width="2" stroke-linejoin="round"/>';
+    });
+    s += '<line id="xh" y1="'+T+'" y2="'+(T+ih)+'" stroke="var(--text2)" stroke-dasharray="3 3" style="display:none"/>';
+    s += '<rect x="'+L+'" y="'+T+'" width="'+iw+'" height="'+ih+'" fill="transparent" id="hit"/></svg>';
+    $('#line').innerHTML = s;
+    var svg=$('#lsvg'), xh=$('#xh'), tip=$('#tip');
+    $('#hit').addEventListener('mousemove', function(e){
+      var pt = svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY; var p = pt.matrixTransform(svg.getScreenCTM().inverse());
+      var i = Math.round((p.x-L)/iw*(days-1)); i=Math.max(0,Math.min(days-1,i));
+      xh.setAttribute('x1',x(i)); xh.setAttribute('x2',x(i)); xh.style.display='';
+      var d=new Date(start+i*864e5);
+      tip.innerHTML = '<b>'+(d.getMonth()+1)+'/'+d.getDate()+'</b><br>' + POSTERS.map(function(q){ return q.label+': '+series[q.code][i]; }).join('<br>');
+      tip.style.display='block'; tip.style.left=(e.clientX+12)+'px'; tip.style.top=(e.clientY+12)+'px';
+    });
+    $('#hit').addEventListener('mouseleave', function(){ xh.style.display='none'; tip.style.display='none'; });
+  }
+
+  // ---- links & QR
+  function buildLinks(){
+    $('#links').innerHTML = POSTERS.map(function(p){
+      var short = p.short || '';
+      return '<div class="card link"><b><i class="sw" style="background:'+colorOf[p.code]+'"></i>'+p.label+'</b>'
+        + '<div class="pair"><div>' + (p.image ? '<img class="poster" src="'+p.image+'" alt="'+p.label+'">' : '') + '<div class="cap">포스터</div></div>'
+        + '<div>' + (p.qr ? '<img class="qrimg" src="'+p.qr+'" alt="'+p.label+' QR">' : '') + '<div class="cap">QR (utm_content='+p.code+')</div></div></div>'
+        + '<div class="short"><a href="'+short+'" target="_blank" rel="noopener">'+short.replace(/^https?:\/\//,'')+'</a></div>'
+        + '<button class="btn" style="margin-top:8px" data-copy="'+short+'">링크 복사</button></div>';
+    }).join('');
+    document.querySelectorAll('[data-copy]').forEach(function(b){ b.onclick=function(){ navigator.clipboard.writeText(b.dataset.copy).then(function(){ b.textContent='복사됨'; setTimeout(function(){b.textContent='링크 복사';},1200); }); }; });
+  }
+
+  buildLinks(); load();
+  if (location.hash === '#links') document.querySelector('[data-tab="links"]').click();
+})();
+</script>
+</body>
+</html>
