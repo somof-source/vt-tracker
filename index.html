@@ -170,7 +170,7 @@
     ].join('');
 
     var max = Math.max(1, other, Math.max.apply(null, POSTERS.map(function(p){return byP[p.code];})));
-    $('#bars').innerHTML = POSTERS.map(function(p){ return bar(p.label, byP[p.code], max, colorOf[p.code]); }).join('') + (other ? bar('기타/미상', other, max, 'var(--muted)') : '');
+    $('#bars').innerHTML = POSTERS.map(function(p){ return bar(p.label, byP[p.code], max, colorOf[p.code]); }).join('') + bar('기타/미상', other, max, 'var(--muted)');
 
     lineChart(R, since);
     $('#legend').innerHTML = POSTERS.map(function(p){ return '<span><i class="sw" style="background:'+colorOf[p.code]+'"></i>'+p.label+'</span>'; }).join('');
