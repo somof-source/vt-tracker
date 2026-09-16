@@ -57,8 +57,17 @@
   .warn{background:#fff4e0;color:#6b4a00;border:1px solid #f0d9a5;border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:12px}
   :root[data-theme="dark"] .warn{background:#3a2c0d;color:#f2d38b;border-color:#5c4612}
   @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .warn{background:#3a2c0d;color:#f2d38b;border-color:#5c4612}}
+  /* 탭이 3개가 되면서 좁은 화면에서 넘칩니다. 제목과 탭을 두 줄로 나눕니다. */
+  @media (max-width:560px){
+    header{padding-bottom:8px}
+    h1{font-size:18px;flex:1 1 100%}
+    .tabs{width:100%}
+    .tabs button{flex:1 1 0;padding:6px 8px;white-space:nowrap}
+    .bar{grid-template-columns:64px 1fr 36px}
+  }
 </style>
 <script>document.write('<script src="config.js?_='+Date.now()+'"><\/script>');</script>
+<script>document.write('<script src="signups.js?_='+Date.now()+'"><\/script>');</script>
 </head>
 <body>
 <div class="wrap">
@@ -66,6 +75,7 @@
     <h1>포스터 유입 대시보드</h1>
     <div class="tabs">
       <button class="on" data-tab="dash">대시보드</button>
+      <button data-tab="signups">신청자</button>
       <button data-tab="links">링크 · QR</button>
     </div>
   </header>
@@ -100,6 +110,28 @@
     </div>
   </section>
 
+  <section id="tab-signups" hidden>
+    <p class="note" id="suMeta"></p>
+    <div class="grid" id="suTiles"></div>
+
+    <div class="card" style="margin-top:12px">
+      <h2>시간대별 신청 유입</h2>
+      <div id="suHour"></div>
+      <div class="legend" id="suLegend"></div>
+      <p class="note">가로축은 신청서가 제출된 시각(0~23시)입니다. 막대에 마우스를 올리면 인원이 나옵니다.</p>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <h2>일자별 신청</h2>
+      <div class="bars" id="suDay"></div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <h2>시간대별 인원</h2>
+      <div class="tbl"><table id="suTable"><thead><tr><th>시간대</th><th>남성</th><th>여성</th><th>미기재</th><th>합계</th></tr></thead><tbody></tbody></table></div>
+    </div>
+  </section>
+
   <section id="tab-links" hidden>
     <p class="note">포스터와 거기에 인쇄된 QR·단축 링크의 짝입니다. 인스타그램 링크는 프로필 바이오에 씁니다.</p>
     <div class="links" id="links"></div>
@@ -121,8 +153,7 @@
   document.querySelectorAll('.tabs button').forEach(function(b){
     b.onclick = function(){
       document.querySelectorAll('.tabs button').forEach(function(x){ x.classList.toggle('on', x===b); });
-      $('#tab-dash').hidden = b.dataset.tab !== 'dash';
-      $('#tab-links').hidden = b.dataset.tab !== 'links';
+      ['dash','signups','links'].forEach(function(t){ $('#tab-'+t).hidden = b.dataset.tab !== t; });
     };
   });
   document.querySelectorAll('[data-range]').forEach(function(b){
@@ -227,8 +258,117 @@
     document.querySelectorAll('[data-copy]').forEach(function(b){ b.onclick=function(){ navigator.clipboard.writeText(b.dataset.copy).then(function(){ b.textContent='복사됨'; setTimeout(function(){b.textContent='링크 복사';},1200); }); }; });
   }
 
-  buildLinks(); load();
-  if (location.hash === '#links') document.querySelector('[data-tab="links"]').click();
+
+  // ---- 신청자 (구글폼 응답 시트 집계; signups.js)
+  var SU_SERIES = [
+    { k:'m', label:'남성',   color:'var(--s1)' },
+    { k:'f', label:'여성',   color:'var(--s2)' },
+    { k:'u', label:'미기재', color:'var(--muted)' }
+  ];
+  function suUsed(S){
+    // 값이 0뿐인 계열은 범례·툴팁에서 뺍니다.
+    return SU_SERIES.filter(function(t){
+      return S.byHour.some(function(r){ return r[t.k] > 0; });
+    });
+  }
+  function buildSignups(){
+    var S = window.SIGNUPS;
+    if (!S) { $('#suMeta').textContent = 'signups.js 가 없습니다. tracker 폴더에서 python3 make_signups.py 를 실행하세요.'; return; }
+    var used = suUsed(S);
+    var A = S.accepted, acc = A.m + A.f + A.u;
+    var pk = S.byHour[S.peakHour], pkN = pk.m + pk.f + pk.u;
+
+    $('#suMeta').textContent = '구글폼 응답 ' + S.total + '건 · ' + S.generated + ' 기준 (집계 수치만, 개인정보 없음)';
+    $('#suTiles').innerHTML = [
+      tile('총 신청', S.total, '응답 전체'),
+      tile('합격', acc, acc ? Math.round(acc / S.total * 100) + '%' : ''),
+      tile('합격 성비', A.m + ' : ' + A.f, acc ? '남 ' + Math.round(A.m / acc * 100) + '% · 여 ' + Math.round(A.f / acc * 100) + '%' : ''),
+      tile('피크 시간대', S.peakHour + '시', pkN + '건')
+    ].join('');
+
+    $('#suLegend').innerHTML = used.map(function(t){
+      return '<span><i class="sw" style="background:' + t.color + '"></i>' + t.label + '</span>';
+    }).join('');
+
+    suHourChart(S, used);
+
+    var dmax = Math.max.apply(null, S.byDay.map(function(d){ return d.m + d.f + d.u; }).concat([1]));
+    $('#suDay').innerHTML = S.byDay.map(function(d){
+      return bar(d.d, d.m + d.f + d.u, dmax, 'var(--s1)');
+    }).join('') || '<div class="note">데이터 없음</div>';
+
+    $('#suTable tbody').innerHTML = S.byHour.filter(function(r){ return r.m + r.f + r.u > 0; }).map(function(r){
+      return '<tr><td>' + r.h + '시</td><td>' + r.m + '</td><td>' + r.f + '</td><td>' + r.u + '</td><td>' + (r.m + r.f + r.u) + '</td></tr>';
+    }).join('');
+  }
+
+  // 위쪽 두 모서리만 둥근 사각형 (막대 끝 4px)
+  function topRounded(x, y, w, h, r){
+    r = Math.min(r, w / 2, h);
+    return '<path d="M' + x + ' ' + (y + h) + ' V' + (y + r) +
+           ' q0 ' + (-r) + ' ' + r + ' ' + (-r) +
+           ' h' + (w - 2 * r) +
+           ' q' + r + ' 0 ' + r + ' ' + r +
+           ' V' + (y + h) + ' Z"';
+  }
+
+  function suHourChart(S, used){
+    var W = 900, H = 248, L = 32, Rr = 12, T = 18, B = 28; // T=18: 최댓값 직접 라벨이 잘리지 않도록
+    var iw = W - L - Rr, ih = H - T - B, n = 24;
+    var totals = S.byHour.map(function(r){ return r.m + r.f + r.u; });
+    var max = Math.max.apply(null, totals.concat([1]));
+    var slot = iw / n, bw = Math.min(26, slot * 0.64);
+    var x = function(i){ return L + slot * i + (slot - bw) / 2; };
+    var y = function(v){ return T + ih - v / max * ih; };
+    var GAP = 2; // 세그먼트 사이 표면색 간격
+
+    var g = '<svg viewBox="0 0 ' + W + ' ' + H + '" id="susvg" role="img" aria-label="시간대별 신청 유입">';
+    [0, 0.5, 1].forEach(function(f){
+      var v = Math.round(max * f);
+      g += '<line x1="' + L + '" x2="' + (W - Rr) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="var(--line)"/>' +
+           '<text x="' + (L - 6) + '" y="' + (y(v) + 4) + '" text-anchor="end" font-size="11" fill="var(--muted)">' + v + '</text>';
+    });
+    for (var i = 0; i < n; i++){
+      if (i % 3 === 0) g += '<text x="' + (x(i) + bw / 2) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="11" fill="var(--muted)">' + i + '</text>';
+      var acc = 0, segs = [];
+      used.forEach(function(t){
+        var v = S.byHour[i][t.k];
+        if (v > 0) { segs.push({ t: t, from: acc, to: acc + v }); acc += v; }
+      });
+      segs.forEach(function(sg, si){
+        var y0 = y(sg.to), y1 = y(sg.from);
+        if (si < segs.length - 1) { /* 아래쪽 세그먼트는 위에 간격을 둡니다 */ }
+        var h = y1 - y0 - (si > 0 ? GAP : 0);
+        if (h <= 0) return;
+        var top = si === segs.length - 1;
+        g += (top ? topRounded(x(i), y0, bw, h, 4) : '<rect x="' + x(i) + '" y="' + y0 + '" width="' + bw + '" height="' + h + '"') +
+             ' fill="' + sg.t.color + '"/>';
+      });
+      if (totals[i] > 0 && totals[i] === max) {
+        g += '<text x="' + (x(i) + bw / 2) + '" y="' + (y(totals[i]) - 5) + '" text-anchor="middle" font-size="11" fill="var(--text2)">' + totals[i] + '</text>';
+      }
+      g += '<rect class="suhit" data-h="' + i + '" x="' + (L + slot * i) + '" y="' + T + '" width="' + slot + '" height="' + ih + '" fill="transparent"/>';
+    }
+    g += '</svg>';
+    $('#suHour').innerHTML = g;
+
+    var tip = $('#tip');
+    document.querySelectorAll('.suhit').forEach(function(el){
+      el.addEventListener('mousemove', function(e){
+        var r = S.byHour[+el.dataset.h], tot = r.m + r.f + r.u;
+        tip.innerHTML = '<b>' + el.dataset.h + '시</b> 총 ' + tot + '건' +
+          (tot ? '<br>' + used.map(function(t){ return t.label + ': ' + r[t.k]; }).join('<br>') : '');
+        tip.style.display = 'block';
+        tip.style.left = Math.min(e.clientX + 12, innerWidth - 140) + 'px';
+        tip.style.top = (e.clientY + 12) + 'px';
+      });
+      el.addEventListener('mouseleave', function(){ tip.style.display = 'none'; });
+    });
+  }
+
+  buildLinks(); buildSignups(); load();
+  if (location.hash === '#signups') document.querySelector('[data-tab="signups"]').click();
+  else if (location.hash === '#links') document.querySelector('[data-tab="links"]').click();
 })();
 </script>
 </body>
