@@ -99,8 +99,11 @@
     </div>
 
     <div class="card" style="margin-top:12px">
-      <h2>포스터 유입 추이</h2>
+      <h2>포스터 유입 추이 <span id="lineModeTag" style="font-weight:400;color:var(--muted)"></span></h2>
       <div class="filters" style="margin:0 0 10px">
+        <button data-linemode="cum" class="on">누적</button>
+        <button data-linemode="rate">시간별</button>
+        <span style="color:var(--line)">|</span>
         <button data-bucket="hour" class="on">시간</button>
         <button data-bucket="day">일</button>
         <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="fitData" checked> 기록이 있는 구간만</label>
@@ -121,7 +124,7 @@
     <div class="grid" id="suTiles"></div>
 
     <div class="card" style="margin-top:12px">
-      <h2>누적 신청자 추이</h2>
+      <h2>신청자 추이 <span id="suModeTag" style="font-weight:400;color:var(--muted)"></span></h2>
       <div class="filters" style="margin:0 0 10px">
         <button data-sumode="cum" class="on">누적</button>
         <button data-sumode="rate">시간별</button>
@@ -157,7 +160,7 @@
   var COLORS = ['var(--s1)','var(--s2)','var(--s3)','var(--s4)','var(--s5)','var(--s6)'];
   var colorOf = {}; POSTERS.forEach(function(p,i){ colorOf[p.code] = COLORS[i % COLORS.length]; });
   var labelOf = {}; POSTERS.forEach(function(p){ labelOf[p.code] = p.label; });
-  var rows = [], rangeDays = 30, lineBucket = 'hour', fitToData = true, suMode = 'cum';
+  var rows = [], rangeDays = 30, lineBucket = 'hour', lineMode = 'cum', fitToData = true, suMode = 'cum';
   var $ = function(s){ return document.querySelector(s); };
 
   // ---- tabs
@@ -180,6 +183,12 @@
     };
   });
   $('#fitData').onchange = function(){ fitToData = this.checked; render(); };
+  document.querySelectorAll('[data-linemode]').forEach(function(b){
+    b.onclick = function(){
+      document.querySelectorAll('[data-linemode]').forEach(function(x){ x.classList.toggle('on', x===b); });
+      lineMode = b.dataset.linemode; render();
+    };
+  });
   document.querySelectorAll('[data-sumode]').forEach(function(b){
     b.onclick = function(){
       document.querySelectorAll('[data-sumode]').forEach(function(x){ x.classList.toggle('on', x===b); });
@@ -341,9 +350,10 @@
       if (i >= 0 && i < n && buckets[i][r.poster] != null) buckets[i][r.poster]++;
     });
     $('#lineRangeLabel').textContent = R.length ? fmtSpan(lo, hi) + ' · ' + n + '칸' : '';
+    $('#lineModeTag').textContent = lineMode === 'cum' ? '(누적 클릭 수)' : '(구간별 클릭 수)';
     timeLine('#line', buckets, POSTERS.map(function(p){
       return { k: p.code, label: p.label, color: colorOf[p.code] };
-    }), bucketMs, { id: 'lsvg', aria: '포스터별 유입 추이' });
+    }), bucketMs, { id: 'lsvg', aria: '포스터별 유입 추이', cumulative: lineMode === 'cum' });
   }
 
   // ---- links & QR
@@ -406,6 +416,7 @@
   function suHourChart(S, used){
     var h = S.hourly || [];
     $('#suRangeLabel').textContent = h.length ? fmtSpan(h[0].t, h[h.length - 1].t) + ' · ' + h.length + '시간' : '';
+    $('#suModeTag').textContent = suMode === 'cum' ? '(누적 신청자 수)' : '(시간당 신청자 수)';
     timeLine('#suHour', h, used.map(function(t){
       return { k: t.k, label: t.label, color: t.color };
     }), 36e5, { id: 'susvg', aria: '시간 단위 신청 추이', cumulative: suMode === 'cum' });
